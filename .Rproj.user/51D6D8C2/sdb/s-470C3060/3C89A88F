@@ -1,0 +1,18 @@
+{
+    "contents" : "---\ntitle: \"PredMachLearnProj\"\nauthor: \"Elliot Smith\"\ndate: \"December 23, 2015\"\noutput: html_document\n---\n\n### Load necessary packages and set seed\n\n```{r}\nrequire(caret)\nrequire(ggplot2)\nrequire(dplyr)\nrequire(randomForest)\nset.seed(1234)\n```\n\n### Read in the data sets\n\n```{r}\nurl1 <- \"https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv\"\nurl2 <- \"https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv\"\ntraining_raw <- read.csv(url1)\ntesting_raw <- read.csv(url2)\n```\n\n### Explore the training data\n\n```{r}\n#Basic exploration\ntraining <- training_raw\ntesting <- testing_raw\ndim(training)\nsummary(training$classe)\nstr(training)\n\n#Explore variables' classes\nclasses <- as.data.frame(sapply(training, class))\nstr(classes)\ntable(classes)\n```\n\n### Clean the training data\n\n```{r}\n#Discard unnecessary variables\ntraining <- select(training, roll_belt:classe)\ndim(training)\n\n#Convert all variables to numeric, except classe\ntraining <- mutate_each(training, funs(as.character), -classe)\ntraining <- mutate_each(training, funs(as.numeric), -classe)\nclasses <- as.data.frame(sapply(training, class))\nstr(classes)\ntable(classes)\n\n#Exclude variables that have NA's\ntraining <- training[,colSums(is.na(training)) == 0]\ndim(training)\n```\n\n### Build the model with cross validation\n\n```{r}\n#Train using Random Forest with cross validation\nmodel1 <- train(classe ~ ., data = training, method = \"rf\", na.action = na.omit, trControl = trainControl(method = \"cv\", number = 5))\n```\n\n### Evaluate model\n\n```{r}\nmodel1\nmodel1$finalModel\n```\n\n###It looks pretty good! \n\n###Make prediction on testing data\n\n```{r}\ntesting$classe <- predict(model1, newdata = testing)\ntesting$classe\n```",
+    "created" : 1450927542443.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "784805331",
+    "id" : "3C89A88F",
+    "lastKnownWriteTime" : 1453784095,
+    "path" : "~/PredMachLearnProj/PredMachLearnProj.Rmd",
+    "project_path" : "PredMachLearnProj.Rmd",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_markdown"
+}

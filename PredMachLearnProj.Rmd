@@ -5,18 +5,79 @@ date: "December 23, 2015"
 output: html_document
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+### Load necessary packages and set seed
 
 ```{r}
-summary(cars)
+require(caret)
+require(ggplot2)
+require(dplyr)
+require(randomForest)
+set.seed(1234)
 ```
 
-You can also embed plots, for example:
+### Read in the data sets
 
-```{r, echo=FALSE}
-plot(cars)
+```{r}
+url1 <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+url2 <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+training_raw <- read.csv(url1)
+testing_raw <- read.csv(url2)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+### Explore the training data
+
+```{r}
+#Basic exploration
+training <- training_raw
+testing <- testing_raw
+dim(training)
+summary(training$classe)
+str(training)
+
+#Explore variables' classes
+classes <- as.data.frame(sapply(training, class))
+str(classes)
+table(classes)
+```
+
+### Clean the training data
+
+```{r}
+#Discard unnecessary variables
+training <- select(training, roll_belt:classe)
+dim(training)
+
+#Convert all variables to numeric, except classe
+training <- mutate_each(training, funs(as.character), -classe)
+training <- mutate_each(training, funs(as.numeric), -classe)
+classes <- as.data.frame(sapply(training, class))
+str(classes)
+table(classes)
+
+#Exclude variables that have NA's
+training <- training[,colSums(is.na(training)) == 0]
+dim(training)
+```
+
+### Build the model with cross validation
+
+```{r}
+#Train using Random Forest with cross validation
+model1 <- train(classe ~ ., data = training, method = "rf", na.action = na.omit, trControl = trainControl(method = "cv", number = 5))
+```
+
+### Evaluate model
+
+```{r}
+model1
+model1$finalModel
+```
+
+###It looks pretty good! 
+
+###Make prediction on testing data
+
+```{r}
+testing$classe <- predict(model1, newdata = testing)
+testing$classe
+```
